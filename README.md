@@ -1,2 +1,75 @@
 # vim9-ChitChat
-Vim9 Plugin to interact with LLM
+
+ChitChat is a lightweight Vim9 plugin that brings a chat interface directly into your editor. It is
+designed to work seamlessly with local LLMs running via Ollama.
+Conversations happen in a dedicated buffer, keeping your workflow uninterrupted and your data private.
+
+<p align="center">
+  <img width="300" height="300" src="./doc/screenshot.jpg">
+</p>
+
+## ✨ Features
+
+- 100% Local: Designed for Ollama. No API keys sent to the cloud.
+- Vim-Native: Uses Vim buffers and windows. No external Python or Node.js dependencies (just curl).
+- Distraction-Free: Simple "Chat" and "Input" split view.
+- Context-Aware: (Optional) Can read your current buffer context or a file.
+
+## 📋 Prerequisites
+
+1. **Vim 9.0+** (Required for Vim9 script support).
+2. **[Ollama](https://ollama.com/)** installed and running.
+3. **curl** command available in your path.
+
+## 📦 Installation
+
+Using vim-plug:
+
+```vim
+Plug 'dpretet/vim9-ChitChat'
+```
+
+or any other plugin manager
+
+## ⚙️  Configuration
+
+Add these variables to your .vimrc to configure the connection to Ollama.
+
+```vim
+" Default model to use (must be pulled in Ollama)
+g:chitchat_model = 'mistral'
+
+" Ollama API endpoint (default is usually correct)
+g:chitchat_url = 'http://localhost:11434/api/chat'
+```
+
+## 🚀 Usage
+
+1. Open any file in Vim.
+2. Run the command to open the chat interface:
+
+```vim
+:ChitChatAsk
+```
+3. Type your query in the bottom panel and use shift/control + enter
+
+### Key Mappings (Input Window)
+
+| Mapping | Action |
+| :--- | :--- |
+| **`Shift + Enter`** | **Send message** |
+| **`Ctrl + Enter`** | **Send message** (Alternative) |
+| **`Esc`** | Close the input window |
+
+
+## 🛠️ Troubleshooting
+
+Nothing happens when I press Shift+Enter?
+
+Make sure Ollama is running (ollama serve in a terminal).
+Verify you have pulled the model defined in your config (e.g., ollama pull mistral).
+Some terminals do not distinguish Shift+Enter from Enter. Try using Ctrl+Enter instead.
+
+## 📜 License
+
+MIT license
