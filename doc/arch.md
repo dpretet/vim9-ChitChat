@@ -2,33 +2,31 @@
 
 ## UI
 
-- Input prompt can be:
-    - In a dedicated buffer
-    - In a popup window
+✅ Input prompt is diplayed in a dedicated buffer
 
-- Separation between the input prompt and the discussion
-  is horizontally
+✅ Separation between the input prompt and the discussion
+   is horizontally
 
-- A prompt entry sent to the model and completed is displayed
-  into the discussion panel
+✅ A prompt entry sent to the model and completed is displayed
+   into the discussion panel
 
-- The UI indicates the model is completing a request
+✅ The UI indicates the model is completing a request
 
 - Different styles can be selected to render the conversation
 
 ## UX
 
-- The interface is organized as a chat
+✅ The interface is organized as a chat
     - a place is reserved for the query sent and the model answer
     - a place is reserved for the prompt to write
 
-- The UI indicates the model is completing a request
+✅ The UI indicates the model is completing a request
 
 - A request can be cancelled by ctrl-c
 
-- A function is responsible to send a message to the model
+✅ A function is responsible to send a message to the model
 
-- This function can be associated to a mapping, like shift-<CR>
+✅ This function can be associated to a mapping, like shift-<CR>
 
 - The user can mention a buffer to load to the model with a
   syntax like "/buffer 0" or /buffer program.py"
@@ -50,7 +48,7 @@
     - vim functions
     - shell command
 
-- The user can configure the plugin in a vim9 script
+✅ The user can configure the plugin in a vim9 script
 
 - The user can list the chat history
 
@@ -67,30 +65,31 @@
 
 ## Configuration
 
-- The user can configure the plugin in a vim9 script, either his
+✅ The user can configure the plugin in a vim9 script, either his
   vimrc or a separated script file.
 
-- Several variables will be exposed by the plugin
+✅ Several variables will be exposed by the plugin
 
 - The model engine can be configured with:
-    - the model name to use
+    ✅ the model name to use
     - the REST server address/port
     - a default agent prompt tuning
+    - the context length
 
 - The UI layout can be configured to be:
-    - splitted hoizontally or vertically
-    - embedded in a popup or a regular buffer
+    ✅ splitted hoizontally or vertically
     - render the conversation with different styles
 
-- The mapping of the plugin functions can be setup. A default mapping
-  is proposed if a variable is set ("default\_mapping")
+✅ The mapping of the plugin functions can be setup. 
+
+✅ A default mapping is proposed if a variable is set ("default\_mapping")
 
 - The user can configure the chat history
     - He can configure where the chat history is stored
     - He can enable or disable the chat history storage
     - The chat history storage is disabled by default
 
-- If the variables are not overriden, the plugin will proposed defaults
+✅  If the variables are not overriden, the plugin will proposed defaults
 
 ## User Function
 
@@ -111,7 +110,7 @@ If the Chitchat buffer is opened, call ChitChatClose(), else call ChitChatOpen()
 
 ### ChitChatExit()
 
-Close the ChitChat buffer and exit the model exchange.
+Call ChitChatClose()
 If history is configured, save the conversation.
 
 ### ChitChatHistory()
