@@ -48,7 +48,7 @@
     - vim functions
     - shell command
 
-✅ The user can configure the plugin in a vim9 script
+❌The user can configure the plugin in a vim9 script
 
 - The user can list the chat history
 

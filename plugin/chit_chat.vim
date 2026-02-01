@@ -1,11 +1,28 @@
 vim9script
 
-# Default configuration
-g:chit_chat_model = 'qwen2.5-coder:3b' # 'ministral-3:3b'
-g:chit_chat_split = 'vertical'
-g:chit_chat_width = 50
+# Default configurations
+if !exists('g:chit_chat_model')
+    g:chit_chat_model = 'qwen2.5-coder:3b' # 'ministral-3:3b'
+endif
+if !exists('g:chit_chat_width')
+    g:chit_chat_width = 50
+endif
+if !exists('g:chit_chat_split')
+    g:chit_chat_split = 'vertical'
+endif
 
-# Uesr Command
+if !exists('g:chit_chat_agent')
+    g:chit_chat_agent = ''
+endif
+
+if !exists('g:chit_chat_temperature')
+    g:chit_chat_temperature = 0.2 # deterministic
+    # g:chit_chat_temperature = 0.7 # standard / chat
+    # g:chit_chat_temperature = 1.0 # brainstorming
+endif
+
+
+# User Commands
 command ChitChatOpen call chit_chat#OpenChat()
 command ChitChatToggle call chit_chat#ToggleChat()
 command ChitChatClose call chit_chat#CloseChat()

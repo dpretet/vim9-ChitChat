@@ -1,21 +1,7 @@
 vim9script
 
 #-----------------------------------------------
-# Default configuration
-#-----------------------------------------------
-
-if !exists('g:chit_chat_model')
-    g:chit_chat_model = 'ministral-3b'
-endif
-if !exists('g:chit_chat_width')
-    g:chit_chat_width = 50
-endif
-if !exists('g:chit_chat_split')
-    g:chit_chat_split = 'vertical'
-endif
-
-#-----------------------------------------------
-# Local variable for the chat buffer number
+# Local variables for the chat buffer number
 #-----------------------------------------------
 var chat_bufnr = 0
 var chat_history: list<dict<any>> = []
@@ -131,11 +117,10 @@ enddef
 
 
 #---------------------------------------------------
-# Add to the chat context a buffer
+# Add a buffer to the chat context
 # If no argument or if argument is '%', the function
 # loads the current buffer if is saved in a file.
 #---------------------------------------------------
-
 export def AddBuffer(target: string = '')
     var bnr: number
 
@@ -164,12 +149,12 @@ export def AddBuffer(target: string = '')
 
     # 4. Chemin absolu
     var fullpath = fnamemodify(raw_name, ':p')
-    echo fullpath
-
     AddFile(fullpath)
 enddef
 
-# Fonction pour charger un fichier depuis le chemin (disque)
+#-----------------------------------------------------------
+# Add a file to the context
+#-----------------------------------------------------------
 export def AddFile(path: string)
     if empty(path)
         echoerr "Erreur : Chemin de fichier manquant."
@@ -177,7 +162,8 @@ export def AddFile(path: string)
     endif
 
     # 1. Obtenir le chemin absolu (gère les chemins relatifs et les ~)
-    var fullpath = fnamemodify(path, ':p')
+    var fullpath = expand(path)
+    fullpath = fnamemodify(fullpath, ':p')
 
     # 2. Vérification sur le disque
     if !filereadable(fullpath)
@@ -188,53 +174,85 @@ export def AddFile(path: string)
     # 3. Lecture du fichier (renvoie une liste de strings)
     var content = readfile(fullpath)
 
+    var ext = DetectFiletypeInvisible(fullpath)
+    echo ext
+
     # 4. Stockage
-    StoreContext(fullpath, content)
+    StoreContext(fullpath, content, ext)
 enddef
 
-# (Rappel) La fonction interne pour sauvegarder dans le dictionnaire
-def StoreContext(path: string, content: list<string>)
-    echom content
-    chat_context[path] = join(content, "\n")
+# Détecte le filetype sans ouvrir de fenêtre visible
+def DetectFiletypeInvisible(path: string): string
+    var abspath = fnamemodify(path, ':p')
+    var nr = bufnr(abspath)
+    var exists_already = (nr != -1)
+
+    # Si le fichier n'est pas déjà chargé dans Vim
+    if !exists_already
+        # 1. On crée le buffer en mode "caché"
+        nr = bufadd(abspath)
+
+        # 2. On charge le contenu (nécessaire pour les détections basées sur le contenu)
+        call bufload(nr)
+
+        # 3. On évite qu'il apparaisse dans la liste (:ls) pour ne pas polluer
+        call setbufvar(nr, '&buflisted', 0)
+
+        # 4. On force Vim à déclencher la détection de type pour ce fichier
+        # On utilise 'silent!' pour éviter des messages d'erreur si le fichier est bizarre
+        execute 'silent! doautocmd filetypedetect BufRead ' .. fnameescape(abspath)
+    endif
+
+    # 5. On récupère le type détecté
+    var ft = getbufvar(nr, '&filetype')
+
+    # 6. NETTOYAGE : Si on l'a ouvert nous-mêmes, on le détruit complètement
+    if !exists_already
+        execute 'silent! bwipeout ' .. nr
+    endif
+
+    # Fallback si Vim ne trouve rien
+    if empty(ft)
+        return 'text'
+    endif
+
+    return ft
+enddef
+
+#-----------------------------------------------------------
+# Save a file and its content in a dict, pushed later
+# in the context
+#-----------------------------------------------------------
+def StoreContext(path: string, content: list<string>, extension: string)
+    chat_context[path] = {'content': join(content, "\n"),
+                          "lang": extension
+                         }
     echo "✅ Ajouté au contexte : " .. fnamemodify(path, ':t')
 enddef
 
+#----------------------------------------------------
+# Print the list of files added in the context
+#----------------------------------------------------
 export def ShowContext()
     if empty(chat_context)
         echo "📭 Le contexte est vide."
         return
     endif
 
-    var content_to_show = GetContextString()
-
-    # Ouvre un nouveau split vertical
-    botright vnew
-
-    # Configuration du buffer "poubelle" (scratch buffer)
-    setlocal buftype=nofile      # Pas lié à un fichier
-    setlocal bufhidden=wipe      # Détruit quand on le ferme
-    setlocal noswapfile          # Pas de fichier .swp
-    setlocal modifiable          # On doit pouvoir écrire dedans au début
-
-    # Écriture du contenu (split découpe la string en liste de lignes)
-    setline(1, split(content_to_show, "\n"))
-
-    # Esthétique : Markdown colore bien les blocs de code
-    setlocal filetype=markdown
-
-    # On rend le buffer lecture seule pour éviter de croire qu'on modifie les vrais fichiers
-    setlocal nomodifiable
-
-    echo "👀 Contexte affiché."
+    var context = "# Files present in context: \n"
+    for [path, data] in items(chat_context)
+        context = context .. "- " .. path .. "\n"
+    endfor
+    echo context
 enddef
 
-# Génère la string formatée (sera aussi utilisée pour l'envoi à l'IA)
+#-----------------------------------------------------------------------
+# Get the files content to add to the context when send to the model
+#-----------------------------------------------------------------------
 def GetContextString(): string
     if empty(chat_context)
         return ""
     endif
-
-    var full_text = "Voici les fichiers chargés dans le contexte :\n\n"
 
     for [path, content] in items(chat_context)
         var fname = fnamemodify(path, ':t') # Juste le nom du fichier
@@ -246,11 +264,17 @@ def GetContextString(): string
     return full_text
 enddef
 
+#-----------------------------------------------------------------------
+# Wipe out the context
+#-----------------------------------------------------------------------
 export def ForgetAll()
     chat_context = {}
-    echo "Mémoire du modèle effacée."
+    echo "Context has been erased."
 enddef
 
+#-----------------------------------------------------------------------
+# Forget a specific file
+#-----------------------------------------------------------------------
 export def Forget(path: string = '')
     var target: string
 
@@ -309,9 +333,10 @@ def SubmitInput()
         endif
     endif
 
-    # 1. Append the user request
+    # 1. Append the user request and build the context
     AppendMessage('user', message)
     chat_history += [{role: 'user', content: message}]
+    var system_content = BuildContext()
     redraw
 
     # 2. Add a temporary sandglass to the chat panel
@@ -319,7 +344,7 @@ def SubmitInput()
     redraw
 
     # 3. Call the model and wait for the completion
-    var response = CallModel(chat_history)
+    var response = CallModel(chat_history, system_content)
 
     # 4. Delete the last lines, the ones displaying the sandglass
     for _ in range(num_lines)
@@ -380,14 +405,53 @@ def AppendMessage(role: string, content: string): number
 enddef
 
 #---------------------------------------------------
+# Build the message sent to the model
+#---------------------------------------------------
+def BuildContext(): list<dict<any>>
+
+    var msg = ""
+    var ctx: list<dict<any>> = []
+
+    if !empty(g:chit_chat_agent)
+        msg = msg .. "# Your Role\n"
+        msg = msg .. g:chit_chat_agent
+        msg = msg .. "\n"
+    endif
+
+    if !empty(chat_context)
+
+        msg = msg .. "# Context File\n"
+        msg = msg .. "Use the following files as context to answer the user request,\n"
+        msg = msg .. "enclosed in code block with the appropriate file type\n\n"
+
+        for [path, data] in items(chat_context)
+            var filename = fnamemodify(path, ':t')
+            var lang = data['lang']
+
+            msg = msg .. "## " .. filename .. "\n"
+            msg = msg .. "```" .. lang .. "\n"
+            msg = msg .. data['content']
+            msg = msg .. "```" .. "\n\n"
+
+        endfor
+    endif
+
+    add(ctx, { 'role': 'system', 'content': msg })
+    return ctx
+
+enddef
+
+#---------------------------------------------------
 # Call the model wait for the completion
 # @Returns the completion in Json formatting
 #---------------------------------------------------
-def CallModel(messages: list<dict<any>>): string
+def CallModel(messages: list<dict<any>>, system: list<dict<any>>): string
     try
         var data = {
             model: g:chit_chat_model,
             messages: messages,
+            system: system,
+            temperature: g:chit_chat_temperature,
             stream: false
         }
 
@@ -413,5 +477,4 @@ def CallModel(messages: list<dict<any>>): string
         return "Exception: " .. v:exception
     endtry
 enddef
-
 
