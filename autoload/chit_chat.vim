@@ -41,8 +41,8 @@ export def OpenChat()
 
     AppendMessage('assistant', 'Hello! Hit enter to write')
 
-    # Mapping Entrée pour ouvrir la zone de saisie
-    nnoremap <buffer> <CR> <ScriptCmd>ChitChatAsk()<CR>
+    # Map enter to open the query buffer
+    nnoremap <buffer> <CR> <ScriptCmd>Ask()<CR>
 enddef
 
 #-----------------------------------------------
@@ -124,30 +124,30 @@ enddef
 export def AddBuffer(target: string = '')
     var bnr: number
 
-    # 1. Résolution de la cible (Vide, %, ou Numéro)
+    # 1. Get buffer number (empty, %, or a number)
     if target == '' || target == '%'
         bnr = bufnr('%')
-    elseif target =~ '^\d\+$' # Si l'argument ne contient que des chiffres
+    elseif target =~ '^\d\+$' # if only contains number
         bnr = str2nr(target)
     else
         echoerr "Argument invalide : " .. target .. " (attendu: vide, % ou numéro)"
         return
     endif
 
-    # 2. Vérification que le buffer existe
+    # 2. Verify the buffer exists
     if !bufexists(bnr)
         echoerr "Le buffer numéro " .. bnr .. " n'existe pas."
         return
     endif
 
-    # 3. Récupération du nom (indispensable pour le contexte)
+    # 3. Get the file name
     var raw_name = bufname(bnr)
     if empty(raw_name)
         echoerr "Le buffer " .. bnr .. " n'a pas de nom de fichier associé."
         return
     endif
 
-    # 4. Chemin absolu
+    # 4. Get the absolue path and add in context
     var fullpath = fnamemodify(raw_name, ':p')
     AddFile(fullpath)
 enddef
@@ -227,7 +227,7 @@ def StoreContext(path: string, content: list<string>, extension: string)
     chat_context[path] = {'content': join(content, "\n"),
                           "lang": extension
                          }
-    echo "✅ Ajouté au contexte : " .. fnamemodify(path, ':t')
+    echo "Ajouté au contexte : " .. fnamemodify(path, ':t')
 enddef
 
 #----------------------------------------------------
@@ -290,9 +290,9 @@ export def Forget(path: string = '')
     # 2. Vérifier si la clé existe dans le dictionnaire
     if has_key(chat_context, target)
         remove(chat_context, target)
-        echo "🗑️ Retiré du contexte : " .. fnamemodify(target, ':t')
+        echo "Retiré du contexte : " .. fnamemodify(target, ':t')
     else
-        echo "⚠️ Ce fichier n'était pas dans le contexte : " .. fnamemodify(target, ':t')
+        echo "Ce fichier n'était pas dans le contexte : " .. fnamemodify(target, ':t')
     endif
 enddef
 
@@ -446,35 +446,54 @@ enddef
 # @Returns the completion in Json formatting
 #---------------------------------------------------
 def CallModel(messages: list<dict<any>>, system: list<dict<any>>): string
+
+    # 1. Préparation du Payload (Identique à avant)
+    var payload = {
+        "model": g:chit_chat_model,
+        "messages": messages,
+        "system": system,
+        "temperature": get(g:, 'chit_chat_temperature', 0.2),
+        "stream": false
+    }
+
+    var json_data = json_encode(payload)
+
+    # 2. Construction de la commande Curl
+    # NOTE: On utilise '-d @-' qui signifie "Lis les données depuis l'entrée standard"
+    var cmd = ['curl', '-s', '-X', 'POST', g:chit_chat_api_url]
+    cmd += ['-H', 'Content-Type: application/json']
+
+    if !empty(g:chit_chat_api_key)
+        cmd += ['-H', 'Authorization: Bearer ' .. g:chit_chat_api_key]
+    endif
+
+    cmd += ['-d', '@-']
+
+    # 3. Exécution Sécurisée
+    # On passe 'json_data' en 2ème argument. Vim va l'injecter proprement dans curl.
+    # On utilise shellescape() sur les parties de la commande pour plus de sécurité (optionnel mais bien)
+    # Pour faire simple ici, le join suffit car les URL/Headers sont simples,
+    # mais c'est le 2ème argument qui résout ton problème ZSH.
+
+    var res_json = system(join(cmd, ' '), json_data)
+
+    # 4. Parsing (Identique à avant)
     try
-        var data = {
-            model: g:chit_chat_model,
-            messages: messages,
-            system: system,
-            temperature: g:chit_chat_temperature,
-            stream: false
-        }
+        var response_data = json_decode(res_json)
 
-        var tmpfile = tempname()
-        writefile([json_encode(data)], tmpfile)
-
-        var cmd = 'curl -s -H "Content-Type: application/json" http://localhost:11434/api/chat -d @' .. tmpfile
-        var response = system(cmd)
-        delete(tmpfile)
-
-        if empty(response)
-            return "Erreur: Aucune réponse."
+        if has_key(response_data, 'choices')
+            && len(response_data['choices']) > 0
+            && has_key(response_data['choices'][0], 'message')
+            return response_data['choices'][0]['message']['content']
+        else
+            # Gestion d'erreur spécifique API
+            if has_key(response_data, 'error')
+                return "Erreur API (" .. response_data['error']['type'] .. "): " .. response_data['error']['message']
+            endif
+            return "Erreur API : Structure inattendue.\n" .. res_json
         endif
-
-        var json = json_decode(response)
-
-        if type(json) != v:t_dict || !has_key(json, 'message')
-            return "Erreur API: " .. response
-        endif
-
-        return json.message.content
     catch
-        return "Exception: " .. v:exception
+        return "Erreur Technique (JSON/Curl) : " .. v:exception .. "\nRéponse brute : " .. res_json
     endtry
 enddef
 

@@ -21,6 +21,15 @@ if !exists('g:chit_chat_temperature')
     # g:chit_chat_temperature = 1.0 # brainstorming
 endif
 
+if !exists('g:chit_chat_url')
+    # ollama URL
+    g:chit_chat_api_url = 'http://localhost:11434/v1/chat/completions'
+endif
+
+if !exists('g:chit_chat_api_key')
+    # Ollama n'a pas besoin de clé, mais on met une string vide ou 'ollama'
+    g:chit_chat_api_key = 'ollama'
+endif
 
 # User Commands
 command ChitChatOpen call chit_chat#OpenChat()
