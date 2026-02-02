@@ -35,6 +35,7 @@ endif
 command ChitChatOpen call chit_chat#OpenChat()
 command ChitChatToggle call chit_chat#ToggleChat()
 command ChitChatClose call chit_chat#CloseChat()
+command ChitChatExit call chit_chat#ExitChat()
 command ChitChatAsk call chit_chat#Ask()
 command! -nargs=? ChitChatAddBuffer call chit_chat#AddBuffer(<f-args>)
 command! -nargs=1 -complete=file ChitChatAddFile call chit_chat#AddFile(<f-args>)

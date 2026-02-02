@@ -74,14 +74,27 @@ enddef
 
 #-----------------------------------------------
 # Close the chat panel and delete the buffer
+# and the history
 #-----------------------------------------------
-export def CloseChat()
+export def ExitChat()
     if chat_bufnr != 0 && bufexists(chat_bufnr)
         execute 'bdelete! ' .. chat_bufnr
         chat_bufnr = 0
     endif
+    chat_history = []
 enddef
 
+#-----------------------------------------------
+# Close the chat panel
+#-----------------------------------------------
+export def CloseChat()
+    # If visible, close the chat panel
+    var winnr = bufwinnr(chat_bufnr)
+    if winnr != -1
+        var winid = win_getid(winnr)
+        win_execute(winid, 'close')
+    endif
+enddef
 
 #-----------------------------------------------
 # Function to call to query the model.
@@ -452,7 +465,7 @@ def CallModel(messages: list<dict<any>>, system: list<dict<any>>): string
         "model": g:chit_chat_model,
         "messages": messages,
         "system": system,
-        "temperature": get(g:, 'chit_chat_temperature', 0.2),
+        "temperature": g:chit_chat_temperature,
         "stream": false
     }
 

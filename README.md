@@ -37,10 +37,19 @@ Add these variables to your .vimrc to configure the connection to Ollama.
 
 ```vim
 " Default model to use (must be pulled in Ollama)
-g:chitchat_model = 'mistral'
+g:chitchat_model = 'qwen2.5-coder:3b'
+
+" Model creativity:
+" - 0.2: very deterministic, good for coding
+" - 0.7: standard / conversation
+" - 1: brainstorming, creativity
+g:chit_chat_temperature = 0.2
 
 " Ollama API endpoint (default is usually correct)
 g:chitchat_url = 'http://localhost:11434/api/chat'
+
+" API key if use a web service like OpenAI, Anthropic, Grok...
+g:chit_chat_api_key = ''
 ```
 
 ## 🚀 Usage
@@ -51,7 +60,43 @@ g:chitchat_url = 'http://localhost:11434/api/chat'
 ```vim
 :ChitChatAsk
 ```
-3. Type your query in the bottom panel and use shift/control + enter
+3. Type your query in the bottom panel and use `shift+return` or `ctrl+return`
+
+Files can be added in the convesration context:
+
+```vim
+ChitChatAddFile ./my/source.c
+```
+
+Buffers can also be added:
+
+```vim
+ChitChatAddBuffer       # Add current buffer
+ChitChatAddBuffer %     # Add current buffer
+ChitChatAddBuffer 5     # Add buffer 5
+```
+
+Context can be viewed:
+
+```vim
+ChitChatShowContext
+```
+
+And context can be clean-up:
+
+```vim
+ChitChatForget ./my/source.c
+ChitChatForgetAll
+```
+
+ChitChat conversation buffer can be opened, closed, toggled and be quit:
+
+```vim
+ChitChatOpen
+ChitChatClose
+ChitChatToggle
+ChitChatExit
+```
 
 ### Key Mappings (Input Window)
 
