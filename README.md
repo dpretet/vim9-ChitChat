@@ -89,6 +89,13 @@ ChitChatForget ./my/source.c
 ChitChatForgetAll
 ```
 
+A code block can be copied then paste to the prompt with two function:
+
+```vim
+ChitChatYank # of current line or a selection
+ChitChatPaste
+```
+
 ChitChat conversation buffer can be opened, closed, toggled and be quit:
 
 ```vim

@@ -6,6 +6,8 @@ vim9script
 var chat_bufnr = 0
 var chat_history: list<dict<any>> = []
 var chat_context: dict<any> = {}
+var stashed_code: list<string> = []
+var stashed_ft: string = ""
 
 #-----------------------------------------------
 # Open the chat buffer and launch the discussion
@@ -231,6 +233,68 @@ def DetectFiletypeInvisible(path: string): string
 
     return ft
 enddef
+
+
+
+
+# Copy a line or a selection for copy in prompt buffer
+export def ChitChatYank()
+    # On récupère le langage du buffer actif (ex: python, rust, javascript)
+    stashed_ft = &filetype
+
+    # On sauvegarde le contenu actuel du registre 'z' pour être propre
+    var save_reg = getreg('z')
+    var save_type = getregtype('z')
+
+    # Explication de la commande :
+    # gv  -> Ré-active la dernière sélection visuelle
+    # "zy -> Copie (yank) cette sélection dans le registre 'z'
+     if mode() ==# "V" # visual selection
+         normal! gv"zy
+     else # no selection, get current line
+         var line_content = getline('.')
+         setreg('z', line_content)
+     endif
+
+    # On récupère le contenu du registre z et on le transforme en liste
+    # On gère le cas où le registre est vide ou null
+    var raw_content = getreg('z')
+    if raw_content == null_string
+        stashed_code = []
+    else
+        stashed_code = split(raw_content, "\n")
+    endif
+
+    # On restaure le registre 'z' original
+    setreg('z', save_reg, save_type)
+
+    echo "Code (" .. stashed_ft .. ") mis en mémoire (lignes: " .. len(stashed_code) .. ")"
+enddef
+
+# Paste a previous selection into the buffer, enclosed by markdown code block
+export def ChitChatPaste()
+    if empty(stashed_code)
+        echo "Aucun code en mémoire."
+        return
+    endif
+
+    # On construit le bloc Markdown
+    # Résultat :
+    # ```python
+    # print('hello')
+    # ```
+    var block = ['```' .. stashed_ft]
+    extend(block, stashed_code)
+    add(block, '```')
+    add(block, '') # Une ligne vide après pour continuer à écrire
+
+    # On insère le bloc juste après la ligne où se trouve le curseur
+    append(line('.'), block)
+
+    # On déplace le curseur à la fin du bloc collé
+    cursor(line('.') + len(block), 1)
+enddef
+
 
 #-----------------------------------------------------------
 # Save a file and its content in a dict, pushed later
