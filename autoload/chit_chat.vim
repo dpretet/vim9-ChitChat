@@ -8,14 +8,32 @@ var chat_history: list<dict<any>> = []
 var chat_context: dict<any> = {}
 var stashed_code: list<string> = []
 var stashed_ft: string = ""
+var chat_agent = ""
+var chat_temperature = 0.2
+var chat_model = ""
 
 #-----------------------------------------------
 # Open the chat buffer and launch the discussion
 #-----------------------------------------------
-export def OpenChat()
+export def OpenChat(agent: string = '')
+
     if chat_bufnr != 0 && bufexists(chat_bufnr)
-        ToggleChat()
         return
+    endif
+
+    if empty(agent)
+        chat_agent = ""
+        chat_temperature = g:chit_chat_temperature
+        chat_model = g:chit_chat_model
+    else
+        if !has_key(g:chit_chat_agent, agent)
+            echom "ERREUR CRITIQUE : La clé " .. agent .. " n'est pas dans le dictionnaire."
+            return
+        endif
+
+        chat_agent = g:chit_chat_agent[agent]["description"]
+        chat_temperature = g:chit_chat_agent[agent]["temperature"]
+        chat_model = g:chit_chat_agent[agent]["model"]
     endif
 
     if g:chit_chat_split == 'vertical'
@@ -41,7 +59,11 @@ export def OpenChat()
 
     chat_bufnr = bufnr('')
 
-    AppendMessage('assistant', 'Hello! Hit enter to write')
+    if empty(agent)
+        AppendMessage('assistant', 'Hello! Hit enter to write')
+    else
+        AppendMessage('assistant', '(' .. agent .. ")\n\n" ..  'Hello! Hit enter to write')
+    endif
 
     # Map enter to open the query buffer
     nnoremap <buffer> <CR> <ScriptCmd>Ask()<CR>
@@ -489,9 +511,9 @@ def BuildContext(): list<dict<any>>
     var msg = ""
     var ctx: list<dict<any>> = []
 
-    if !empty(g:chit_chat_agent)
+    if !empty(chat_agent)
         msg = msg .. "# Your Role\n"
-        msg = msg .. g:chit_chat_agent
+        msg = msg .. chat_agent
         msg = msg .. "\n"
     endif
 
@@ -529,7 +551,7 @@ def CallModel(messages: list<dict<any>>, system: list<dict<any>>): string
         "model": g:chit_chat_model,
         "messages": messages,
         "system": system,
-        "temperature": g:chit_chat_temperature,
+        "temperature": chat_temperature,
         "stream": false
     }
 

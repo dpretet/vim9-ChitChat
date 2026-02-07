@@ -30,11 +30,11 @@ if !exists('g:chit_chat_api_key')
 endif
 
 if !exists('g:chit_chat_agent')
-    g:chit_chat_agent = ''
+    g:chit_chat_agent = {}
 endif
 
 # User Commands
-command ChitChatOpen call chit_chat#OpenChat()
+command -nargs=? ChitChatOpen call chit_chat#OpenChat(<f-args>)
 command ChitChatToggle call chit_chat#ToggleChat()
 command ChitChatClose call chit_chat#CloseChat()
 command ChitChatExit call chit_chat#ExitChat()

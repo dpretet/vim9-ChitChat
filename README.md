@@ -50,6 +50,15 @@ g:chitchat_url = 'http://localhost:11434/api/chat'
 
 " API key if use a web service like OpenAI, Anthropic, Grok...
 g:chit_chat_api_key = ''
+
+" Agents description, overriding previous variables
+g:chit_chat_agent = {
+    Isaac: {
+        description: " You are a vim script developer",
+        temperature: 0.2,
+        model: 'qwen2.5-coder:3b'
+    }
+}
 ```
 
 ## 🚀 Usage
@@ -71,9 +80,9 @@ ChitChatAddFile ./my/source.c
 Buffers can also be added:
 
 ```vim
-ChitChatAddBuffer       # Add current buffer
-ChitChatAddBuffer %     # Add current buffer
-ChitChatAddBuffer 5     # Add buffer 5
+ChitChatAddBuffer       " Add current buffer
+ChitChatAddBuffer %     " Add current buffer
+ChitChatAddBuffer 5     " Add buffer 5
 ```
 
 Context can be viewed:
@@ -92,7 +101,7 @@ ChitChatForgetAll
 A code block can be copied then paste to the prompt with two function:
 
 ```vim
-ChitChatYank # of current line or a selection
+ChitChatYank " of current line or a selection
 ChitChatPaste
 ```
 
@@ -100,6 +109,7 @@ ChitChat conversation buffer can be opened, closed, toggled and be quit:
 
 ```vim
 ChitChatOpen
+ChitChatOpen Isaac " if described in g:chit_chat_agent
 ChitChatClose
 ChitChatToggle
 ChitChatExit
