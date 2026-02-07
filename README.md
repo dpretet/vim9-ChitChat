@@ -1,8 +1,7 @@
-# 🤖 vim9-ChitChat
+# vim9-ChitChat
 
 ![Vim Version](https://img.shields.io/badge/Vim-9.0%2B-green.svg?logo=vim)
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
-![Backend](https://img.shields.io/badge/Backend-Ollama%20%7C%20OpenAI-orange)
 
 **ChitChat** is a lightweight, pure **Vim9 plugin** that brings a chat interface directly into your editor.
 
@@ -22,9 +21,9 @@ While designed to run **locally** with [Ollama](https://ollama.com/) for complet
 
 ## 📋 Prerequisites
 
-1.  **Vim 9.0+** (Required for Vim9 script support).
-2.  **curl** available in your path.
-3.  **[Ollama](https://ollama.com/)** (if running local models) or an API Key for a cloud provider.
+*  **Vim 9.0+** (Required for Vim9 script support).
+*  **curl** available in your path.
+*  **[Ollama](https://ollama.com/)** (if running local models) or an API Key for a cloud provider.
 
 ## 📦 Installation
 
@@ -124,9 +123,9 @@ Give the LLM access to your code or files.
 :ChitChatAddBuffer 5    " Add buffer number 5
 
 " Manage Context
-:ChitChatShowContext    " See what is currently in context
-:ChitChatForget ./src/main.c
-:ChitChatForgetAll      " Clear all context
+:ChitChatShowContext         " See what is currently in context
+:ChitChatForget ./src/main.c " Remove a file from context
+:ChitChatForgetAll           " Clear all context
 ```
 
 ### 📋 Helper Commands
@@ -134,8 +133,8 @@ Give the LLM access to your code or files.
 Utilities to move code between your editor and the chat.
 
 ```vim
-:ChitChatYank           " Yank current line or selection to internal clipboard
-:ChitChatPaste          " Paste the yanked text into the Chat Input
+:ChitChatYank  " Yank current line or selection to internal clipboard
+:ChitChatPaste " Paste the yanked text into the Chat Input
 ```
 
 ### ⌨️  Key Mappings (Input Window)
