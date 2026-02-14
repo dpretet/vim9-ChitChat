@@ -59,7 +59,7 @@ To use an online service, simply change the URL and add your API key.
 Example: OpenAI
 
 ```vim
-g:chit_chat_url = 'https://api.openai.com/v1/chat/completions'
+g:chit_chat_api_url = 'https://api.openai.com/v1/chat/completions'
 g:chit_chat_model = 'gpt-4o'
 g:chit_chat_api_key = 'sk-proj-xxxxxxxx....'
 ```
@@ -67,7 +67,7 @@ g:chit_chat_api_key = 'sk-proj-xxxxxxxx....'
 Example: Groq (Ultra-fast)
 
 ```vim
-g:chit_chat_url = 'https://api.groq.com/openai/v1/chat/completions'
+g:chit_chat_api_url = 'https://api.groq.com/openai/v1/chat/completions'
 g:chit_chat_model = 'llama3-70b-8192'
 g:chit_chat_api_key = 'gsk_xxxxxxxx....'
 ```

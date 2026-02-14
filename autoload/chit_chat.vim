@@ -546,11 +546,12 @@ enddef
 #---------------------------------------------------
 def CallModel(messages: list<dict<any>>, system: list<dict<any>>): string
 
+    var full_messages = system + messages
+
     # 1. Préparation du Payload (Identique à avant)
     var payload = {
         "model": g:chit_chat_model,
-        "messages": messages,
-        "system": system,
+        "messages": full_messages,
         "temperature": chat_temperature,
         "stream": false
     }
